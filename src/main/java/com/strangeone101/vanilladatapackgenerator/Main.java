@@ -23,23 +23,23 @@ public class Main {
     public static void main(String[] args) {
 
         if (args.length == 0) {
-            new GUI();
-            return;
+            throw new UnsupportedOperationException("GUI not ready yet! Use -help instead!");
+            //new GUI();
         }
 
         CommandLineParser parser = new DefaultParser();
 
         try {
             Options options = new Options();
-            CommandLine line = parser.parse(options, args);
+            CommandLine line = parser.parse(options, args); //Parses all console options
 
-            if (line.hasOption(Options.HELP)) {
+            if (line.hasOption(Options.HELP)) { //-help
                 HelpFormatter formatter = new HelpFormatter();
-                formatter.printHelp("Use the params bellow", options);
+                formatter.printHelp("Use the params bellow", options); //Prints the help
                 return;
             }
 
-            String output = "output";
+            String output = "output"; //Default directory to output to
             if (line.hasOption(Options.OUTPUT)) output = line.getOptionValue(Options.OUTPUT);
 
             File fileOut = new File(output);
@@ -54,10 +54,11 @@ public class Main {
 
             if (!jarFile.exists()) throw new IOException("Could not find file \"" + line.getOptionValue(Options.JAR) + "\"!");
 
+            //Import the jar into the java runtime so we can use it. Like how bukkit loads plugins.
             if (!importMinecraft(jarFile)) return;
 
             Converter conv = new Converter(jarFile, fileOut);
-            conv.run();
+            conv.run(); //Go go go go go
         }
         catch (Exception exp) {
             Logger.getGlobal().severe("Could not complete conversion!");
@@ -67,6 +68,11 @@ public class Main {
 
     }
 
+    /**
+     * Imports the jar from file to use at runtime
+     * @param jar The jar file
+     * @return True if successful
+     */
     public static boolean importMinecraft(File jar) {
         try {
             Logger.getGlobal().info("Importing minecraft jar...");
@@ -83,6 +89,7 @@ public class Main {
             String id = json.get("id").getAsString();
             Logger.getGlobal().info("Imported server jar. Jar version is " + id);
 
+            //TODO Probably remove this bit, since we are using the vanilla system instead of parsing our own now
             DATAPACK_VERSION = json.get("pack_version").getAsJsonObject().get("data").getAsInt();
             if (TARGET_DATAPACK_VERSION != DATAPACK_VERSION) {
                 Logger.getGlobal().warning("Datapack version is " + DATAPACK_VERSION
