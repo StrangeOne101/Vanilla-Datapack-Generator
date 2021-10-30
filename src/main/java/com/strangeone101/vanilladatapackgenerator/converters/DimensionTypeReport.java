@@ -37,13 +37,15 @@ public class DimensionTypeReport implements DataProvider {
     public void run(HashCache cache) {
         Path outputFolder = this.generator.getOutputFolder();
 
-
+        //Foreach dimension
         for (Map.Entry<ResourceKey<DimensionType>, DimensionType> entry : VanillaBridge.getDimensionTypeRegistry().entrySet()) {
             Path path = createPath(outputFolder, entry.getKey().location());
             DimensionType type = entry.getValue();
+
+            //The CODEC specifies how to encode the classes' values, in this case, how a dimension type class converts to JSON
             Function<Supplier<DimensionType>, DataResult<JsonElement>> func = JsonOps.INSTANCE.withEncoder(DimensionType.CODEC);
             try {
-                Optional<JsonElement> optionalJson = (func.apply(() -> type)).result();
+                Optional<JsonElement> optionalJson = (func.apply(() -> type)).result(); //Pulling an optional JSON element from the encoded dimension type
                 if (optionalJson.isPresent()) {
                     DataProvider.save(GSON, cache, optionalJson.get(), path); continue;
                 }
@@ -56,7 +58,7 @@ public class DimensionTypeReport implements DataProvider {
     }
 
     private static Path createPath(Path $$0, ResourceLocation $$1) {
-        return $$0.resolve("reports/dimension_type/" + $$1.getPath() + ".json");
+        return $$0.resolve("data/minecraft/dimension_type/" + $$1.getPath() + ".json");
     }
 
     public String getName() {

@@ -37,13 +37,15 @@ public class DimensionReport implements DataProvider {
     public void run(HashCache cache) {
         Path outputFolder = this.generator.getOutputFolder();
 
-
+        //Foreach dimension
         for (Map.Entry<ResourceKey<LevelStem>, LevelStem> entry : VanillaBridge.getWorldGenSettings().dimensions().entrySet()) {
             Path path = createPath(outputFolder, entry.getKey().location());
             LevelStem stem = entry.getValue();
+
+            //The CODEC specifies how to encode the classes' values, in this case, how a dimension class converts to JSON
             Function<LevelStem, DataResult<JsonElement>> func = JsonOps.INSTANCE.withEncoder(LevelStem.CODEC);
             try {
-                Optional<JsonElement> element = (func.apply(stem)).result();
+                Optional<JsonElement> element = (func.apply(stem)).result(); //Pulling an optional JSON element from the encoded dimension
                 if (element.isPresent()) {
                     DataProvider.save(GSON, cache, element.get(), path); continue;
                 }
@@ -56,7 +58,7 @@ public class DimensionReport implements DataProvider {
     }
 
     private static Path createPath(Path $$0, ResourceLocation $$1) {
-        return $$0.resolve("reports/dimension/" + $$1.getPath() + ".json");
+        return $$0.resolve("data/minecraft/dimension/" + $$1.getPath() + ".json");
     }
 
     public String getName() {
