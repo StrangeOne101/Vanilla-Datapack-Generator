@@ -8,11 +8,20 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 
 import java.io.File;
+import java.io.FileFilter;
+import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.logging.Logger;
 
 public class Main {
@@ -54,11 +63,58 @@ public class Main {
 
             if (!jarFile.exists()) throw new IOException("Could not find file \"" + line.getOptionValue(Options.JAR) + "\"!");
 
-            //Import the jar into the java runtime so we can use it. Like how bukkit loads plugins.
-            if (!importMinecraft(jarFile)) return;
 
-            Converter conv = new Converter(jarFile, fileOut);
-            conv.run(); //Go go go go go
+            ClassLoader loader = Main.class.getClassLoader();
+            if (line.hasOption(Options.LIBS)) {
+                File folder = new File(line.getOptionValue(Options.LIBS));
+                if (!folder.exists()) throw new FileNotFoundException("Could not find libs folder \"" + line.getOptionValue(Options.LIBS) + "\"");
+
+                File[] files = folder.listFiles((pathname) -> pathname.getName().toLowerCase().endsWith(".jar")
+                        || pathname.getName().toLowerCase().endsWith(".zip"));
+                URL[] urls = new URL[files.length];
+                int counter = 0;
+                for (File innerFile : files) {
+                    urls[counter++] = innerFile.toURI().toURL();
+                    Logger.getGlobal().info("Loaded library " + innerFile.getName());
+                }
+                loader = new URLClassLoader(urls, loader);
+                Thread.currentThread().setContextClassLoader(loader);
+
+                /*for (File file : files) {
+                    JarFile jar = new JarFile(file);
+                    Enumeration<JarEntry> entries = jar.entries();
+                    if (entries.hasMoreElements()) {
+                        for (JarEntry entry = entries.nextElement(); entries.hasMoreElements(); entry = entries.nextElement()) {
+                            if (!entry.isDirectory() && entry.getName().endsWith(".class")) {
+                                String name = entry.getName().substring(0, entry.getName().length() - 6).replaceAll("/", ".");
+                                try {
+                                    loader.loadClass(name);
+                                } catch (ClassNotFoundException e) {
+                                    Logger.getGlobal().warning("Failed to load class " + name);
+                                }
+                            }
+                        }
+                    }
+                }*/
+
+            }
+
+            //Import the jar into the java runtime so we can use it. Like how bukkit loads plugins.
+            if (!importMinecraft(jarFile, loader)) return;
+
+            try {
+
+                Class clazz = Class.forName("net.minecraft.data.DataProvider", true, loader);
+            } catch (ClassNotFoundException e) {
+                Logger.getGlobal().info("DataProvider not found!");
+            }
+
+            Class convClass = Class.forName("com.strangeone101.vanilladatapackgenerator.Converter", true, loader);
+            Object convObj = convClass.getConstructor(File.class, File.class).newInstance(jarFile, fileOut);
+            Method runMethod = convClass.getDeclaredMethod("run", ClassLoader.class);
+            runMethod.invoke(convObj, loader);
+            //Converter conv = new Converter(jarFile, fileOut);
+            //conv.run(); //Go go go go go
         }
         catch (Exception exp) {
             Logger.getGlobal().severe("Could not complete conversion!");
@@ -73,10 +129,11 @@ public class Main {
      * @param jar The jar file
      * @return True if successful
      */
-    public static boolean importMinecraft(File jar) {
+    public static boolean importMinecraft(File jar, ClassLoader loader) {
         try {
             Logger.getGlobal().info("Importing minecraft jar...");
-            JavaClassLoader loader = new JavaClassLoader(jar);
+            loader = new JavaClassLoader(jar, loader);
+            ((JavaClassLoader)loader).loadMinecraftStuff();
 
             InputStream stream = loader.getResourceAsStream("version.json");
             if (stream == null) {

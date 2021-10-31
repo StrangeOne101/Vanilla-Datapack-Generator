@@ -2,6 +2,7 @@ package com.strangeone101.vanilladatapackgenerator;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Enumeration;
@@ -14,17 +15,44 @@ import java.util.logging.Logger;
 
 public class JavaClassLoader extends URLClassLoader {
 
+    private Manifest manifest;
+    private JarFile jarjar;
+
     static {
-        //ClassLoader.registerAsParallelCapable();
+        ClassLoader.registerAsParallelCapable();
+    }
+
+    public JavaClassLoader(File jar, ClassLoader loader) throws IOException, ClassNotFoundException {
+        super(new URL[]{jar.toURI().toURL()}, loader);
+
+        jarjar = new JarFile(jar);
+        manifest = jarjar.getManifest();
     }
 
     public JavaClassLoader(File jar) throws IOException, ClassNotFoundException {
-        super(new URL[]{jar.toURI().toURL()}, Main.class.getClassLoader());
+        this(jar, Main.class.getClassLoader().getParent());
+    }
 
-        JarFile jarjar = new JarFile(jar);
-        Manifest manifest = jarjar.getManifest();
+    public Class<?> load(String name) throws ClassNotFoundException {
+        Class<?> clazz = super.loadClass(name, true);
+        Logger.getGlobal().info("Loaded " + name);
+        return clazz;
+    }
+
+    public void loadMinecraftStuff() {
         String main = manifest.getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
-        load(main); //Load the main class specified from the manifest file of the jar
+
+        if (main == null || main.equals("")) return;
+
+        try {
+            //Load the main class specified from the manifest file of the jar, then create a new instance of it.
+            //However, we aren't calling anything in the actual class, nor running it.
+            load(main).getConstructor().newInstance();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
 
         //Everything on from this point on SHOULDNT be needed, but I used it to try fix the issue. I was unsuccessful
 
@@ -42,6 +70,7 @@ public class JavaClassLoader extends URLClassLoader {
                         for (String whitename : whitelist) {
                             if (name.startsWith(whitename)) { //If the name of the class is in the whitelisted packages list
                                 Class<?> clazz = loadClass(name, true);
+
                                 Logger.getGlobal().info("Loaded class " + entry.getName());
                             }
                         }
@@ -54,10 +83,5 @@ public class JavaClassLoader extends URLClassLoader {
         }
 
         Thread.currentThread().setContextClassLoader(this);
-    }
-
-    public void load(String name) throws ClassNotFoundException {
-        Class<?> clazz = super.loadClass(name, true);
-        Logger.getGlobal().info("Loaded " + name);
     }
 }
