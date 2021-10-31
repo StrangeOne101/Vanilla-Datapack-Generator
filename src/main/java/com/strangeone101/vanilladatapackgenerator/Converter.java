@@ -11,11 +11,9 @@ import java.util.logging.Logger;
 
 public class Converter {
 
-    private File jar;
     private File output;
 
     public Converter(File jar, File output) {
-        this.jar = jar;
         this.output = output;
     }
 

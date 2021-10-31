@@ -76,6 +76,11 @@
             <name>Minecraft Libraries</name>
             <url>https://libraries.minecraft.net</url>
         </repository>
+        <repository>
+            <id>local-repo</id>
+            <name>Local Repo</name>
+            <url>file://${project.basedir}</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -108,7 +113,12 @@
             <artifactId>datafixerupper</artifactId>
             <version>4.0.26</version>
         </dependency>
+        <dependency>
+            <groupId>net.sf.jopt-simple</groupId>
+            <artifactId>jopt-simple</artifactId>
+            <version>5.0.4</version>
 
+        </dependency>
         <!-- Depends used for this project  -->
         <dependency>
             <groupId>commons-cli</groupId>
@@ -116,11 +126,9 @@
             <version>1.5.0</version>
         </dependency>
         <dependency>
-            <groupId>com.mojang</groupId>
-            <artifactId>minecraft</artifactId>
-            <version>LATEST</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/remapped_server_21w43a.jar</systemPath>
+            <groupId>libs</groupId>
+            <artifactId>remapped_server</artifactId>
+            <version>21w43a</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

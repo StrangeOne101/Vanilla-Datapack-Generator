@@ -54,15 +54,16 @@ public class Main {
             File fileOut = new File(output);
             if (fileOut.exists() && fileOut.isFile()) throw new IOException("Output folder cannot be the same name as a file!");
 
-            if (!line.hasOption(Options.JAR)) {
+            //DEBUG DISABLED
+            /*if (!line.hasOption(Options.JAR)) {
                 System.out.println("Server jar not specified! Use -help to see all options!");
                 return;
             }
 
             File jarFile = new File(line.getOptionValue(Options.JAR));
 
-            if (!jarFile.exists()) throw new IOException("Could not find file \"" + line.getOptionValue(Options.JAR) + "\"!");
-
+            if (!jarFile.exists()) throw new IOException("Could not find file \"" + line.getOptionValue(Options.JAR) + "\"!");*/
+            //DEBUG DISABLED END
 
             ClassLoader loader = Main.class.getClassLoader();
             if (line.hasOption(Options.LIBS)) {
@@ -99,8 +100,10 @@ public class Main {
 
             }
 
+            //DEBUG DISABLED
             //Import the jar into the java runtime so we can use it. Like how bukkit loads plugins.
-            if (!importMinecraft(jarFile, loader)) return;
+            //if (!importMinecraft(jarFile, loader)) return;
+            //DEBUG DISABLED END
 
             try {
 
@@ -110,7 +113,7 @@ public class Main {
             }
 
             Class convClass = Class.forName("com.strangeone101.vanilladatapackgenerator.Converter", true, loader);
-            Object convObj = convClass.getConstructor(File.class, File.class).newInstance(jarFile, fileOut);
+            Object convObj = convClass.getConstructor(File.class).newInstance(fileOut);
             Method runMethod = convClass.getDeclaredMethod("run", ClassLoader.class);
             runMethod.invoke(convObj, loader);
             //Converter conv = new Converter(jarFile, fileOut);
